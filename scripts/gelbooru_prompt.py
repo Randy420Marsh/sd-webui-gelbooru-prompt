@@ -8,7 +8,6 @@ import contextlib
 from modules import script_callbacks, scripts, shared
 from modules.shared import opts
 import requests
-import bs4
 from bs4 import BeautifulSoup
 
 
@@ -17,15 +16,15 @@ def on_ui_settings():
 
 
 def fetch(image):
-    # update hash based on image
+    # Update hash based on the image
     name = image.name
-    # image.orig_name returns the path of the image, so we need to get the name of the file from that path
-    # make this work for windows and linux
+    # Extract the file name from the path for both Windows and Linux
     if "\\" in name:
         name = name.split("\\")[-1]
     elif "/" in name:
         name = name.split("/")[-1]
     print("name: " + name)
+
     hash = name.split(".")[0]
     if hash.startswith("sample_"):
         hash = hash.replace("sample_", "")
@@ -33,11 +32,11 @@ def fetch(image):
         hash = hash.replace("thumbnail_", "")
     print("hash: " + hash)
 
-    url = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&tags=md5:" + hash
+    url = f"https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&tags=md5:{hash}"
     req = requests.get(url)
     data = req.json()
     if data["@attributes"]["count"] > 1:
-        return ("No image found with that hash...")
+        return "No image found with that hash..."
     else:
         post = data["post"][0]
         tags = post["tags"]
@@ -46,8 +45,8 @@ def fetch(image):
         for tag in tags.split():
             tag = tag.replace("_", " ")
             parsed.append(tag)
-        parsed = (", ").join(parsed)
-        return (parsed)
+        parsed = ", ".join(parsed)
+        return parsed
 
 
 class BooruPromptsScript(scripts.Script):
@@ -55,7 +54,7 @@ class BooruPromptsScript(scripts.Script):
         super().__init__()
 
     def title(self):
-        return ("Gelbooru Prompt")
+        return "Gelbooru Prompt"
 
     def show(self, is_img2img):
         return scripts.AlwaysVisible
@@ -63,8 +62,8 @@ class BooruPromptsScript(scripts.Script):
     def ui(self, is_img2img):
         with gr.Group():
             with gr.Accordion("Gelbooru Prompt", open=False):
-                fetch_tags = gr.Button(value='Get Tags', variant='primary')
-                image = gr.File(type="filepath", label="Image with MD5 Hash")
+                fetch_tags = gr.Button(value="Get Tags", variant="primary")
+                image = gr.File(label="Image with MD5 Hash", type="file",  file_types=[".png", ".jpg", ".jpeg", ".webp"])
 
             with contextlib.suppress(AttributeError):
                 if is_img2img:
